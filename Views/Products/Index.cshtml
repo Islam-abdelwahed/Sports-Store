@@ -1,0 +1,40 @@
+@model List<Project.Models.Product>
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="container">
+    <h1>Products</h1>
+
+    @if (Model.Any())
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model)
+                {
+                    <tr>
+                        <td>@product.ProductId</td>
+                        <td>@product.Name</td>
+                        <td>$@product.Price.ToString("F2")</td>
+                        <td>@product.StockQuantity</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <p>No products found. Please add products to the database.</p>
+        </div>
+    }
+</div>
