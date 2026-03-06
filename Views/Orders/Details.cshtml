@@ -1,0 +1,97 @@
+@model Project.Models.OrderDetailsVM
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="container">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">My Orders</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.OrderNumber</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-receipt"></i> Order Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Order Information</h5>
+                    <dl class="row">
+                        <dt class="col-sm-5">Order Number:</dt>
+                        <dd class="col-sm-7"><strong>@Model.OrderNumber</strong></dd>
+
+                        <dt class="col-sm-5">Order Date:</dt>
+                        <dd class="col-sm-7">@Model.OrderDate.ToString("MMMM dd, yyyy hh:mm tt")</dd>
+
+                        <dt class="col-sm-5">Status:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-info">@Model.Status</span>
+                        </dd>
+
+                        <dt class="col-sm-5">Total Amount:</dt>
+                        <dd class="col-sm-7"><strong class="text-success fs-5">$@Model.TotalAmount.ToString("N2")</strong></dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <h5>Shipping Address</h5>
+                    <address class="border p-3 rounded">
+                        <i class="bi bi-geo-alt"></i> <strong>Delivery Address:</strong><br />
+                        @Model.Street<br />
+                        @Model.City, @Model.Zip<br />
+                        @Model.Country
+                    </address>
+                </div>
+            </div>
+
+            <h5>Order Items</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th class="text-end">Line Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@item.ProductName</strong>
+                                </td>
+                                <td><code>@item.SKU</code></td>
+                                <td>$@item.UnitPrice.ToString("N2")</td>
+                                <td>
+                                    <span class="badge bg-secondary">×@item.Quantity</span>
+                                </td>
+                                <td class="text-end"><strong>$@item.LineTotal.ToString("N2")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="4" class="text-end"><h5 class="mb-0">Grand Total:</h5></td>
+                            <td class="text-end"><h5 class="mb-0 text-success">$@Model.TotalAmount.ToString("N2")</h5></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <a asp-action="Index" class="btn btn-primary">
+                    <i class="bi bi-arrow-left"></i> Back to My Orders
+                </a>
+                <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="bi bi-shop"></i> Continue Shopping
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

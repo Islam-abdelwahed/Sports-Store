@@ -1,0 +1,47 @@
+@model Project.Models.OrderStatusVM
+
+@{
+    ViewData["Title"] = "Update Order Status";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-white">
+                <h4><i class="bi bi-arrow-repeat"></i> Update Order Status</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Order Number:</strong> @Model.OrderNumber
+                </div>
+
+                <form asp-action="UpdateStatus" method="post">
+                    <input type="hidden" asp-for="OrderId" />
+                    <input type="hidden" asp-for="OrderNumber" />
+                    <input type="hidden" asp-for="CurrentStatus" />
+
+                    <div class="mb-3">
+                        <label asp-for="NewStatus" class="form-label"></label>
+                        <select asp-for="NewStatus" class="form-select">
+                            <option value="0" selected="@(Model.CurrentStatus == 0)">Pending</option>
+                            <option value="1" selected="@(Model.CurrentStatus == 1)">Processing</option>
+                            <option value="2" selected="@(Model.CurrentStatus == 2)">Shipped</option>
+                            <option value="3" selected="@(Model.CurrentStatus == 3)">Delivered</option>
+                            <option value="4" selected="@(Model.CurrentStatus == 4)">Cancelled</option>
+                        </select>
+                        <span asp-validation-for="NewStatus" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                    <a asp-action="Details" asp-route-id="@Model.OrderId" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

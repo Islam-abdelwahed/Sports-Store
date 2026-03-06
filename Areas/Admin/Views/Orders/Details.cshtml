@@ -1,0 +1,82 @@
+@model Project.Models.OrderDetailsVM
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<div class="container">
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-receipt"></i> Order Details</h4>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5>Order Information</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Order Number:</dt>
+                        <dd class="col-sm-8"><strong>@Model.OrderNumber</strong></dd>
+
+                        <dt class="col-sm-4">Order Date:</dt>
+                        <dd class="col-sm-8">@Model.OrderDate.ToString("MMMM dd, yyyy hh:mm tt")</dd>
+
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8"><span class="badge bg-info">@Model.Status</span></dd>
+
+                        <dt class="col-sm-4">Total Amount:</dt>
+                        <dd class="col-sm-8"><strong class="text-success">$@Model.TotalAmount.ToString("N2")</strong></dd>
+                    </dl>
+                </div>
+                <div class="col-md-6">
+                    <h5>Shipping Address</h5>
+                    <address>
+                        <strong>Street:</strong> @Model.Street<br />
+                        <strong>City:</strong> @Model.City<br />
+                        <strong>Country:</strong> @Model.Country<br />
+                        <strong>Zip Code:</strong> @Model.Zip
+                    </address>
+                </div>
+            </div>
+
+            <h5>Order Items</h5>
+            <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.ProductName</td>
+                            <td><code>@item.SKU</code></td>
+                            <td>$@item.UnitPrice.ToString("N2")</td>
+                            <td>@item.Quantity</td>
+                            <td><strong>$@item.LineTotal.ToString("N2")</strong></td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                        <td><strong class="text-success">$@Model.TotalAmount.ToString("N2")</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div class="mt-3">
+                <a asp-action="UpdateStatus" asp-route-id="@Model.OrderId" class="btn btn-warning">
+                    <i class="bi bi-arrow-repeat"></i> Update Status
+                </a>
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,67 @@
+@model IEnumerable<Project.Models.OrderDetailsVM>
+
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="container">
+    <h2 class="mb-4"><i class="bi bi-bag-check"></i> My Orders</h2>
+
+    @if (Model.Any())
+    {
+        <div class="row">
+            @foreach (var order in Model)
+            {
+                <div class="col-12 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-light">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <small class="text-muted">Order Number</small><br />
+                                    <strong>@order.OrderNumber</strong>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Order Date</small><br />
+                                    @order.OrderDate.ToString("MMM dd, yyyy")
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted">Total</small><br />
+                                    <strong class="text-success">$@order.TotalAmount.ToString("N2")</strong>
+                                </div>
+                                <div class="col-md-2">
+                                    <small class="text-muted">Status</small><br />
+                                    <span class="badge bg-info">@order.Status</span>
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <a asp-action="Details" asp-route-id="@order.OrderId" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="mb-2">Order Items (@order.Items.Count)</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var item in order.Items.Take(3))
+                                {
+                                    <span class="badge bg-secondary">@item.ProductName (x@item.Quantity)</span>
+                                }
+                                @if (order.Items.Count > 3)
+                                {
+                                    <span class="badge bg-light text-dark">+@(order.Items.Count - 3) more</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <h5><i class="bi bi-info-circle"></i> No Orders Yet</h5>
+            <p class="mb-0">You haven't placed any orders yet. <a asp-controller="Catalog" asp-action="Index" class="alert-link">Start shopping</a></p>
+        </div>
+    }
+</div>
