@@ -37,6 +37,16 @@ namespace Project
             })
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+            // Configure cookie authentication paths
+            builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = "/Account/Login";
+                options.LogoutPath = "/Account/Logout";
+                options.AccessDeniedPath = "/Account/AccessDenied";
+                options.ExpireTimeSpan = TimeSpan.FromDays(7);
+                options.SlidingExpiration = true;
+            });
+
             // FUTURE (uncomment after Authentication lectures):
             // builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => { ... })
             //     .AddEntityFrameworkStores<ApplicationDbContext>()

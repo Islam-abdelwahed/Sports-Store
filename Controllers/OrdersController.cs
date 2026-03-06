@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Project.Models;
 using Project.Repositories;
 using Newtonsoft.Json;
@@ -6,6 +7,7 @@ using System.Security.Claims;
 
 namespace Project.Controllers
 {
+    [Authorize]
     public class OrdersController : Controller
     {
         private readonly IRepository<Order> _orderRepo;
@@ -27,11 +29,6 @@ namespace Project.Controllers
         public async Task<IActionResult> Index()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
 
             var orders = await _orderRepo.GetAllAsync();
             var userOrders = orders.Where(o => o.UserId == userId).OrderByDescending(o => o.OrderDate);
@@ -65,11 +62,6 @@ namespace Project.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
 
             var order = await _orderRepo.GetByIdAsync(id);
             
@@ -106,14 +98,6 @@ namespace Project.Controllers
         // GET: Orders/Checkout
         public IActionResult Checkout()
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            if (string.IsNullOrEmpty(userId))
-            {
-                TempData["Error"] = "Please login to checkout.";
-                return RedirectToAction("Login", "Account");
-            }
-
             var cart = GetCart();
             
             if (cart == null || !cart.Any())
@@ -137,11 +121,6 @@ namespace Project.Controllers
         public async Task<IActionResult> Checkout(CheckoutVM model)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            
-            if (string.IsNullOrEmpty(userId))
-            {
-                return RedirectToAction("Login", "Account");
-            }
 
             var cart = GetCart();
             
