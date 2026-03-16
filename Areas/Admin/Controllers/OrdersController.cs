@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Project.Models;
 using Project.Repositories;
 
 namespace Project.Areas.Admin.Controllers
 {
     [Area("Admin")]
+    [Authorize(Roles = "Admin")]
     public class OrdersController(IRepository<Order> orderRepo) : Controller
     {
         private readonly IRepository<Order> orderRepo = orderRepo;

@@ -19,13 +19,13 @@ namespace Project.Controllers
         {
             var products = await _productRepo.GetAllAsync();
             
-            // Filter by category if specified
+            
             if (categoryId.HasValue)
             {
                 products = products.Where(p => p.CategoryId == categoryId.Value).ToList();
             }
 
-            // Filter only active products
+            
             products = products.Where(p => p.IsActive).ToList();
 
             // Calculate pagination
@@ -37,7 +37,7 @@ namespace Project.Controllers
                 .Take(pageSize)
                 .ToList();
 
-            // Get category name if filtering
+            
             string? categoryName = null;
             if (categoryId.HasValue)
             {

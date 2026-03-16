@@ -50,6 +50,7 @@ namespace Project.Controllers
 
                 if (result.Succeeded)
                 {
+                    await _userManager.AddToRoleAsync(user, "Customer");
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     TempData["Success"] = "Registration successful! Welcome to ECommerceStore.";
                     return RedirectToAction("Index", "Home");

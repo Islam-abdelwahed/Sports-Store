@@ -21,7 +21,7 @@ namespace Project.Repositories
 
         public async Task AddRangeAsync(IEnumerable<T> entities)
         {
-            await AddRangeAsync(entities);
+            await dbSet.AddRangeAsync(entities);
         }
 
         public IEnumerable<T> Find(Expression<Func<T, bool>> predicate)

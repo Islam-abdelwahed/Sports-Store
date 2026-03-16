@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Project.Models;
 using Project.Repositories;
 
 namespace Project.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class CategoriesController(IRepository<Category> categoryRepo) : Controller
+    [Authorize(Roles = "Admin")]
+    public class CategoriesController(IRepository<Category> categoryRepo, IRepository<Product> productRepo) : Controller
     {
         private readonly IRepository<Category> categoryRepo = categoryRepo;
+        private readonly IRepository<Product> productRepo = productRepo;
 
         // GET: Admin/Categories
         public async Task<IActionResult> Index()
@@ -98,6 +101,13 @@ namespace Project.Areas.Admin.Controllers
         {
             var category = await categoryRepo.GetByIdAsync(id);
             if (category == null) return NotFound();
+
+            var products = productRepo.Find(p => p.CategoryId == id);
+            var subCategories = categoryRepo.Find(c => c.ParentCategoryId == id);
+
+            ViewBag.ProductCount = products.Count();
+            ViewBag.SubCategoryCount = subCategories.Count();
+
             return View(category);
         }
 
@@ -107,11 +117,20 @@ namespace Project.Areas.Admin.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var category = await categoryRepo.GetByIdAsync(id);
-            if (category != null)
+            if (category == null) return RedirectToAction(nameof(Index));
+
+            // Block
+            var products = productRepo.Find(p => p.CategoryId == id);
+            if (products.Any())
             {
-                categoryRepo.Remove(category);
-                await categoryRepo.SaveAsync();
+                TempData["Error"] = $"Cannot delete category \"{category.Name}\" because it has {products.Count()} product(s). Please reassign or delete the products first.";
+                return RedirectToAction(nameof(Index));
             }
+
+            categoryRepo.Remove(category);
+            await categoryRepo.SaveAsync();
+
+            TempData["Success"] = $"Category \"{category.Name}\" deleted successfully. Any subcategories have been moved to top level.";
             return RedirectToAction(nameof(Index));
         }
 

@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Project.Models;
 using Project.Repositories;
 
 namespace Project.Areas.Admin.Controllers
 {
     [Area("Admin")]
-    public class ProductsController(IRepository<Product> productRepo, IRepository<Category> categoryRepo) : Controller
+    [Authorize(Roles = "Admin")]
+    public class ProductsController(IRepository<Product> productRepo, IRepository<Category> categoryRepo, IRepository<OrderItem> orderItemRepo) : Controller
     {
         private readonly IRepository<Product> productRepo = productRepo;
         private readonly IRepository<Category> categoryRepo = categoryRepo;
+        private readonly IRepository<OrderItem> orderItemRepo = orderItemRepo;
 
         // GET: Admin/Products
         public async Task<IActionResult> Index()
@@ -119,6 +122,11 @@ namespace Project.Areas.Admin.Controllers
         {
             var product = await productRepo.GetByIdAsync(id);
             if (product == null) return NotFound();
+
+            var orderItems = orderItemRepo.Find(oi => oi.ProductId == id);
+            ViewBag.OrderItemCount = orderItems.Count();
+            ViewBag.HasOrders = orderItems.Any();
+
             return View(product);
         }
 
@@ -128,11 +136,27 @@ namespace Project.Areas.Admin.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var product = await productRepo.GetByIdAsync(id);
-            if (product != null)
+            if (product == null) return RedirectToAction(nameof(Index));
+
+            var orderItems = orderItemRepo.Find(oi => oi.ProductId == id);
+            if (orderItems.Any())
             {
+                // Soft delete
+                product.IsActive = false;
+                productRepo.Update(product);
+                await productRepo.SaveAsync();
+
+                TempData["Success"] = $"Product \"{product.Name}\" has been deactivated (soft-deleted) because it appears in {orderItems.Count()} order item(s). Order history is preserved.";
+            }
+            else
+            {
+                // hard delete
                 productRepo.Remove(product);
                 await productRepo.SaveAsync();
+
+                TempData["Success"] = $"Product \"{product.Name}\" has been permanently deleted.";
             }
+
             return RedirectToAction(nameof(Index));
         }
 

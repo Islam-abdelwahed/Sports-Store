@@ -15,9 +15,35 @@
                 <div class="alert alert-danger">
                     <strong>@Model.Name</strong>
                 </div>
+
+                @if (ViewBag.ProductCount > 0)
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Cannot delete:</strong> This category has <strong>@ViewBag.ProductCount product(s)</strong>.
+                        Please reassign or delete the products first.
+                    </div>
+                }
+
+                @if (ViewBag.SubCategoryCount > 0)
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        This category has <strong>@ViewBag.SubCategoryCount subcategory(ies)</strong>.
+                        They will become top-level categories after deletion.
+                    </div>
+                }
+
                 <form asp-action="Delete" method="post">
                     <input type="hidden" asp-for="CategoryId" />
-                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    @if (ViewBag.ProductCount > 0)
+                    {
+                        <button type="submit" class="btn btn-danger" disabled>Yes, Delete</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    }
                     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>

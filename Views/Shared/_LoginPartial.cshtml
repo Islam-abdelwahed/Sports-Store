@@ -16,13 +16,21 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                 <li>
-                    <a class="dropdown-item" asp-controller="Orders" asp-action="Index">
+                    <a class="dropdown-item" asp-area="" asp-controller="Orders" asp-action="Index">
                         <i class="bi bi-bag-check"></i> My Orders
                     </a>
                 </li>
+                @if (User.IsInRole("Admin"))
+                {
+                    <li>
+                        <a class="dropdown-item" asp-area="Admin" asp-controller="Categories" asp-action="Index">
+                            <i class="bi bi-gear"></i> Admin Panel
+                        </a>
+                    </li>
+                }
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <form asp-controller="Account" asp-action="Logout" method="post">
+                    <form asp-area="" asp-controller="Account" asp-action="Logout" method="post">
                         <button type="submit" class="dropdown-item">
                             <i class="bi bi-box-arrow-right"></i> Logout
                         </button>
@@ -30,21 +38,16 @@
                 </li>
             </ul>
         </li>
-        <li class="nav-item">
-            <a asp-area="Admin" asp-controller="Categories" asp-action="Index" class="btn btn-outline-primary btn-sm ms-2">
-                <i class="bi bi-gear"></i> Admin
-            </a>
-        </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Account" asp-action="Login">
+            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">
                 <i class="bi bi-box-arrow-in-right"></i> Login
             </a>
         </li>
         <li class="nav-item">
-            <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm ms-2">
+            <a asp-area="" asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm ms-2">
                 <i class="bi bi-person-plus"></i> Register
             </a>
         </li>

@@ -27,9 +27,26 @@
                         <dd class="col-sm-8">@Model.StockQuantity units</dd>
                     </dl>
                 </div>
+
+                @if (ViewBag.HasOrders)
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        This product appears in <strong>@ViewBag.OrderItemCount order item(s)</strong>.
+                        It will be <strong>deactivated</strong> (soft-deleted) instead of permanently removed to preserve order history.
+                    </div>
+                }
+
                 <form asp-action="Delete" method="post">
                     <input type="hidden" asp-for="ProductId" />
-                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    @if (ViewBag.HasOrders)
+                    {
+                        <button type="submit" class="btn btn-warning">Yes, Deactivate</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    }
                     <a asp-action="Index" class="btn btn-secondary">Cancel</a>
                 </form>
             </div>
