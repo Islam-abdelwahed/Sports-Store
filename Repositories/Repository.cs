@@ -34,6 +34,16 @@ namespace Project.Repositories
             return await dbSet.ToListAsync();
         }
 
+        public async Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = dbSet;
+            foreach (var include in includes)
+            {
+                query = query.Include(include);
+            }
+            return await query.ToListAsync();
+        }
+
         public async Task<T?> GetByIdAsync(int id)
         {
             return await dbSet.FindAsync(id);

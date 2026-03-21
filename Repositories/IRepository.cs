@@ -6,6 +6,7 @@ namespace Project.Repositories
     {
         Task<T?> GetByIdAsync(int id);
         Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes);
         IEnumerable<T> Find(Expression<Func<T, bool>> predicate);   // Used later for filtering & search
 
         Task AddAsync(T entity);

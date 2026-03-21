@@ -16,7 +16,7 @@ namespace Project.Areas.Admin.Controllers
         // GET: Admin/Products
         public async Task<IActionResult> Index()
         {
-            var products = await productRepo.GetAllAsync();
+            var products = await productRepo.GetAllAsync(p => p.Category);
             var viewModels = products.Select(p => new ProductVM
             {
                 ProductId = p.ProductId,
