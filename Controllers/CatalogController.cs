@@ -8,7 +8,7 @@ namespace Project.Controllers
     {
         private readonly IRepository<Product> _productRepo;
         private readonly IRepository<Category> _categoryRepo;
-//
+
         public CatalogController(IRepository<Product> productRepo, IRepository<Category> categoryRepo)
         {
             _productRepo = productRepo;
