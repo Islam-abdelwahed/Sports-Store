@@ -39,6 +39,7 @@ namespace Project.Controllers
                 OrderNumber = o.OrderNumber,
                 OrderDate = o.OrderDate,
                 Status = GetStatusText(o.Status),
+                StatusCode = o.Status,
                 TotalAmount = o.TotalAmount,
                 Country = o.ShippingAddress?.Country ?? "",
                 City = o.ShippingAddress?.City ?? "",
@@ -76,6 +77,7 @@ namespace Project.Controllers
                 OrderNumber = order.OrderNumber,
                 OrderDate = order.OrderDate,
                 Status = GetStatusText(order.Status),
+                StatusCode = order.Status,
                 TotalAmount = order.TotalAmount,
                 Country = order.ShippingAddress?.Country ?? "",
                 City = order.ShippingAddress?.City ?? "",
@@ -198,6 +200,56 @@ namespace Project.Controllers
                 model.Items = cart;
                 model.TotalAmount = cart.Sum(c => c.LineTotal);
                 return View(model);
+            }
+        }
+
+        // POST: Orders/Cancel/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var order = await _orderRepo.GetByIdAsync(id);
+
+            if (order == null || order.UserId != userId)
+            {
+                return NotFound();
+            }
+
+            // Check if order is cancellable (Pending or Processing only)
+            if (order.Status != 0 && order.Status != 1)
+            {
+                TempData["Error"] = "This order cannot be cancelled. Orders can only be cancelled when they are Pending or Processing.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            try
+            {
+                // Update order status to Cancelled (4)
+                order.Status = 4;
+                _orderRepo.Update(order);
+                await _orderRepo.SaveAsync();
+
+                // Restore product stock
+                foreach (var item in order.OrderItems)
+                {
+                    var product = await _productRepo.GetByIdAsync(item.ProductId);
+                    if (product != null)
+                    {
+                        product.StockQuantity += item.Quantity;
+                        _productRepo.Update(product);
+                    }
+                }
+                await _productRepo.SaveAsync();
+
+                TempData["Success"] = "Order has been cancelled successfully. Stock quantities have been restored.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = "Error cancelling order. Please try again.";
+                return RedirectToAction(nameof(Details), new { id });
             }
         }
 

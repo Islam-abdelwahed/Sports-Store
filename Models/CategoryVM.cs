@@ -14,6 +14,8 @@ namespace Project.Models
         [Display(Name="Parent Category")]
         public int? ParentCategoryId { get; set; }
 
+        public string? ParentCategoryName { get; set; }
+
         public IEnumerable<CategoryVM> ParentCategories { get; set; } = [];
     }
 }

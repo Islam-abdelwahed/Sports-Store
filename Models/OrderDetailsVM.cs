@@ -6,7 +6,11 @@
         public string OrderNumber { get; set; } = string.Empty;
         public DateTime OrderDate { get; set; }
         public string Status { get; set; } = string.Empty;
+        public int StatusCode { get; set; }
         public decimal TotalAmount { get; set; }
+
+        // Order can be cancelled if status is Pending (0) or Processing (1)
+        public bool IsCancellable => StatusCode == 0 || StatusCode == 1;
 
         // Shipping Address
         public string Country { get; set; } = string.Empty;

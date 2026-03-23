@@ -41,7 +41,16 @@
                     <tr>
                         <td><strong>@item.CategoryId</strong></td>
                         <td>@item.Name</td>
-                        <td>@(item.ParentCategoryId.HasValue ? "↳ Sub-category" : "<span class='badge bg-success'>Main</span>")</td>
+                        <td>
+                            @if (item.ParentCategoryId.HasValue)
+                            {
+                                <text>↳ @item.ParentCategoryName</text>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Main</span>
+                            }
+                        </td>
                         <td class="text-end">
                             <a asp-action="Edit" asp-route-id="@item.CategoryId" class="btn btn-sm btn-warning">
                                 <i class="bi bi-pencil-square"></i>
