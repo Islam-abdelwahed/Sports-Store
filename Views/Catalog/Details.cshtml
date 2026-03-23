@@ -72,7 +72,7 @@
                     {
                         <form asp-controller="Cart" asp-action="Add" method="post">
                             <input type="hidden" name="ProductId" value="@Model.ProductId" />
-                            
+
                             <div class="mb-3">
                                 <label for="quantity" class="form-label">Quantity</label>
                                 <input type="number" class="form-control" id="quantity" name="Quantity" value="1" min="1" max="@Model.StockQuantity" />
@@ -82,9 +82,9 @@
                                 <button type="submit" class="btn btn-success btn-lg">
                                     <i class="bi bi-cart-plus"></i> Add to Cart
                                 </button>
-                                <a asp-controller="Orders" asp-action="Checkout" asp-route-productId="@Model.ProductId" class="btn btn-primary">
+                                <button type="submit" formaction="@Url.Action("BuyNow", "Cart")" class="btn btn-primary">
                                     <i class="bi bi-lightning-charge"></i> Buy Now
-                                </a>
+                                </button>
                             </div>
                         </form>
                     }
