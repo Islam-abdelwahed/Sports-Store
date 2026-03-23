@@ -162,12 +162,14 @@ namespace Project.Areas.Admin.Controllers
 
         private async Task<IEnumerable<CategoryVM>> GetCategoriesAsync()
         {
-            var categories = await categoryRepo.GetAllAsync();
-            return categories.Select(c => new CategoryVM
-            {
-                CategoryId = c.CategoryId,
-                Name = c.Name
-            });
+            var categories = await categoryRepo.GetAllAsync(c => c.ParentCategory);
+            return categories
+                .Where(c => c.ParentCategoryId.HasValue) // Only child categories
+                .Select(c => new CategoryVM
+                {
+                    CategoryId = c.CategoryId,
+                    Name = $"{c.Name} ({c.ParentCategory?.Name})"
+                });
         }
     }
 }
