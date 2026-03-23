@@ -117,6 +117,36 @@ namespace Project.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: Cart/BuyNow - Add product to cart and redirect to checkout
+        [HttpPost]
+        public async Task<IActionResult> BuyNow(int productId, int quantity = 1)
+        {
+            var product = await _productRepo.GetByIdAsync(productId);
+
+            if (product == null || !product.IsActive || product.StockQuantity < quantity)
+            {
+                TempData["Error"] = "Product not available.";
+                return RedirectToAction("Index", "Catalog");
+            }
+
+            var cart = GetCart();
+
+            // Clear cart and add only this product
+            cart.Clear();
+            cart.Add(new CartItemVM
+            {
+                ProductId = productId,
+                ProductName = product.Name,
+                SKU = product.SKU,
+                UnitPrice = product.Price,
+                Quantity = quantity,
+                StockQuantity = product.StockQuantity
+            });
+
+            SaveCart(cart);
+            return RedirectToAction("Checkout", "Orders");
+        }
+
         private List<CartItemVM> GetCart()
         {
             var cartJson = HttpContext.Session.GetString(CartSessionKey);

@@ -9,6 +9,9 @@ namespace Project.Repositories
         Task<IEnumerable<T>> GetAllAsync(params Expression<Func<T, object>>[] includes);
         IEnumerable<T> Find(Expression<Func<T, bool>> predicate);   // Used later for filtering & search
 
+        // For advanced filtering and pagination - returns IQueryable
+        IQueryable<T> Query();
+
         Task AddAsync(T entity);
         Task AddRangeAsync(IEnumerable<T> entities);
 

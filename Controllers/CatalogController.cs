@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Project.Models;
 using Project.Repositories;
 
@@ -15,29 +16,37 @@ namespace Project.Controllers
             _categoryRepo = categoryRepo;
         }
 
-        public async Task<IActionResult> Index(int? categoryId, int page = 1, int pageSize = 12)
+        public async Task<IActionResult> Index(int? categoryId, string? searchTerm, int page = 1, int pageSize = 12)
         {
-            var products = await _productRepo.GetAllAsync();
-            
-            
+            var query = _productRepo.Query()
+                .Include(p => p.Category)
+                .Where(p => p.IsActive);
+
+            // Apply category filter
             if (categoryId.HasValue)
             {
-                products = products.Where(p => p.CategoryId == categoryId.Value).ToList();
+                query = query.Where(p => p.CategoryId == categoryId.Value);
             }
 
-            
-            products = products.Where(p => p.IsActive).ToList();
+            // Apply search filter
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var search = searchTerm.ToLower();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(search) ||
+                    p.SKU.ToLower().Contains(search));
+            }
 
             // Calculate pagination
-            var totalProducts = products.Count();
+            var totalProducts = await query.CountAsync();
             var totalPages = (int)Math.Ceiling(totalProducts / (double)pageSize);
-            
-            var pagedProducts = products
+
+            var pagedProducts = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToList();
+                .ToListAsync();
 
-            
+            // Get category name if filtering by category
             string? categoryName = null;
             if (categoryId.HasValue)
             {
@@ -62,7 +71,8 @@ namespace Project.Controllers
                 CategoryName = categoryName,
                 CurrentPage = page,
                 TotalPages = totalPages,
-                PageSize = pageSize
+                PageSize = pageSize,
+                SearchTerm = searchTerm
             };
 
             return View(viewModel);

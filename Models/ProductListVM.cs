@@ -5,6 +5,7 @@
         public List<ProductVM> Products { get; set; } = new();
         public int? CategoryId { get; set; }
         public string? CategoryName { get; set; }
+        public string? SearchTerm { get; set; }
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
         public int PageSize { get; set; } = 12;

@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Project.Models;
 using Project.Repositories;
 
@@ -13,10 +14,46 @@ namespace Project.Areas.Admin.Controllers
         private readonly IRepository<Product> productRepo = productRepo;
 
         // GET: Admin/Categories
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(CategoryFilterOptions? filters)
         {
-            var categories = await categoryRepo.GetAllAsync(c => c.ParentCategory);
-            var viewModels = categories.Select(c => new CategoryVM
+            filters ??= new CategoryFilterOptions();
+
+            if (filters.PageSize < 10 || filters.PageSize > 100)
+                filters.PageSize = 25;
+            if (filters.PageNumber < 1)
+                filters.PageNumber = 1;
+
+            var query = categoryRepo.Query().Include(c => c.ParentCategory);
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(filters.SearchTerm))
+            {
+                var searchTerm = filters.SearchTerm.ToLower();
+                query = query.Where(c => c.Name.ToLower().Contains(searchTerm));
+            }
+
+            // Apply category type filter
+            if (filters.IsMainCategoryOnly == true)
+            {
+                query = query.Where(c => !c.ParentCategoryId.HasValue);
+            }
+            else if (filters.IsMainCategoryOnly == false)
+            {
+                query = query.Where(c => c.ParentCategoryId.HasValue);
+            }
+
+            // Apply sorting
+            query = filters.SortBy?.ToLower() switch
+            {
+                "name" => filters.SortOrder == "desc"
+                    ? query.OrderByDescending(c => c.Name)
+                    : query.OrderBy(c => c.Name),
+                _ => query.OrderBy(c => c.CategoryId)
+            };
+
+            var pagedResult = await query.PaginateAsync(filters.PageNumber, filters.PageSize);
+
+            var viewModels = pagedResult.Items.Select(c => new CategoryVM
             {
                 CategoryId = c.CategoryId,
                 Name = c.Name,
@@ -24,7 +61,17 @@ namespace Project.Areas.Admin.Controllers
                 ParentCategoryName = c.ParentCategory?.Name
             }).ToList();
 
-            return View(viewModels);
+            var result = new PaginatedResult<CategoryVM>(
+                viewModels,
+                pagedResult.CurrentPage,
+                pagedResult.PageSize,
+                pagedResult.TotalItems)
+            {
+                Items = viewModels
+            };
+
+            ViewData["CurrentFilters"] = filters;
+            return View(result);
         }
         
         // GET: Admin/Categories/Create
@@ -120,12 +167,20 @@ namespace Project.Areas.Admin.Controllers
             var category = await categoryRepo.GetByIdAsync(id);
             if (category == null) return RedirectToAction(nameof(Index));
 
-            // Block
+            // Block deletion if category has products
             var products = productRepo.Find(p => p.CategoryId == id);
             if (products.Any())
             {
                 TempData["Error"] = $"Cannot delete category \"{category.Name}\" because it has {products.Count()} product(s). Please reassign or delete the products first.";
                 return RedirectToAction(nameof(Index));
+            }
+
+            // Move subcategories to top level before deleting
+            var subCategories = categoryRepo.Find(c => c.ParentCategoryId == id);
+            foreach (var subCategory in subCategories)
+            {
+                subCategory.ParentCategoryId = null;
+                categoryRepo.Update(subCategory);
             }
 
             categoryRepo.Remove(category);

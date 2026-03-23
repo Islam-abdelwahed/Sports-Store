@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Project.Models;
 using Project.Repositories;
 using Newtonsoft.Json;
@@ -26,14 +27,56 @@ namespace Project.Controllers
         }
 
         // GET: Orders/Index - User's order history
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(OrderFilterOptions? filters)
         {
+            filters ??= new OrderFilterOptions { SortBy = "OrderDate", SortOrder = "desc" };
+
+            // Validate page size
+            if (filters.PageSize < 10 || filters.PageSize > 100)
+                filters.PageSize = 20;
+            if (filters.PageNumber < 1)
+                filters.PageNumber = 1;
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var orders = await _orderRepo.GetAllAsync();
-            var userOrders = orders.Where(o => o.UserId == userId).OrderByDescending(o => o.OrderDate);
+            var query = _orderRepo.Query()
+                .Include(o => o.ShippingAddress)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .Where(o => o.UserId == userId);
 
-            var viewModels = userOrders.Select(o => new OrderDetailsVM
+            // Apply search filter (order number)
+            if (!string.IsNullOrEmpty(filters.SearchTerm))
+            {
+                var searchTerm = filters.SearchTerm.ToLower();
+                query = query.Where(o => o.OrderNumber.ToLower().Contains(searchTerm));
+            }
+
+            // Apply status filter
+            if (filters.OrderStatus.HasValue)
+            {
+                query = query.Where(o => o.Status == filters.OrderStatus);
+            }
+
+            // Apply date range filter
+            if (filters.DateFrom.HasValue)
+            {
+                query = query.Where(o => o.OrderDate.Date >= filters.DateFrom.Value.Date);
+            }
+            if (filters.DateTo.HasValue)
+            {
+                query = query.Where(o => o.OrderDate.Date <= filters.DateTo.Value.Date);
+            }
+
+            // Apply sorting
+            query = filters.SortOrder == "desc"
+                ? query.OrderByDescending(o => o.OrderDate)
+                : query.OrderBy(o => o.OrderDate);
+
+            // Apply pagination
+            var pagedResult = await query.PaginateAsync(filters.PageNumber, filters.PageSize);
+
+            var viewModels = pagedResult.Items.Select(o => new OrderDetailsVM
             {
                 OrderId = o.OrderId,
                 OrderNumber = o.OrderNumber,
@@ -56,7 +99,17 @@ namespace Project.Controllers
                 }).ToList()
             }).ToList();
 
-            return View(viewModels);
+            var result = new PaginatedResult<OrderDetailsVM>(
+                viewModels,
+                pagedResult.CurrentPage,
+                pagedResult.PageSize,
+                pagedResult.TotalItems)
+            {
+                Items = viewModels
+            };
+
+            ViewData["CurrentFilters"] = filters;
+            return View(result);
         }
 
         // GET: Orders/Details/5
