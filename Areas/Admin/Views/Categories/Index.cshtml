@@ -1,7 +1,8 @@
-﻿@model IEnumerable<Project.Models.CategoryVM>
+﻿@model Project.Models.PaginatedResult<Project.Models.CategoryVM>
 
 @{
     ViewData["Title"] = "Manage Categories";
+    var filters = (Project.Models.CategoryFilterOptions?)ViewData["CurrentFilters"] ?? new Project.Models.CategoryFilterOptions();
 }
 
 <div class="card shadow-sm">
@@ -26,6 +27,56 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         }
+
+        <!-- Filter Bar -->
+        <form asp-action="Index" method="get" class="mb-3">
+            <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                    <input type="text" name="SearchTerm" class="form-control form-control-sm" placeholder="Search by category name..." value="@filters.SearchTerm" />
+                </div>
+                <div class="col-md-3">
+                    <select name="IsMainCategoryOnly" class="form-select form-select-sm">
+                        <option value="">All Categories</option>
+                        <option value="true" selected="@(filters.IsMainCategoryOnly == true)">Main Categories Only</option>
+                        <option value="false" selected="@(filters.IsMainCategoryOnly == false)">Sub-Categories Only</option>
+                    </select>
+                </div>
+                <div class="col-md-5">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    @if (filters.HasActiveFilters || filters.IsMainCategoryOnly.HasValue)
+                    {
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-x"></i> Clear
+                        </a>
+                    }
+                </div>
+            </div>
+
+            <div class="row g-2 align-items-center">
+                <div class="col-md-6"></div>
+                <div class="col-md-3">
+                    <select name="SortBy" class="form-select form-select-sm">
+                        <option value="">Sort By</option>
+                        <option value="Name" selected="@(filters.SortBy == "Name")">Name</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="PageSize" class="form-select form-select-sm">
+                        <option value="10" selected="@(filters.PageSize == 10)">10 per page</option>
+                        <option value="25" selected="@(filters.PageSize == 25)">25 per page</option>
+                        <option value="50" selected="@(filters.PageSize == 50)">50 per page</option>
+                        <option value="100" selected="@(filters.PageSize == 100)">100 per page</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <div class="mb-3 text-muted small">
+            <i class="bi bi-info-circle"></i>
+            Showing @Model.FirstItemNumber to @Model.LastItemNumber of <strong>@Model.TotalItems</strong> categories
+        </div>
         <table class="table table-hover align-middle">
             <thead class="table-light">
                 <tr>
@@ -36,7 +87,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var item in Model.Items)
                 {
                     <tr>
                         <td><strong>@item.CategoryId</strong></td>
@@ -63,5 +114,31 @@
                 }
             </tbody>
         </table>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Category pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-pageSize="@filters.PageSize">First</a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-pageSize="@filters.PageSize"  asp-route-searchTerm="@filters.SearchTerm">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-pageSize="@filters.PageSize">Last</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+        @if (!Model.Items.Any())
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No categories found.
+            </div>
+        }
     </div>
 </div>

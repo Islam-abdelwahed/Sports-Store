@@ -44,6 +44,12 @@ namespace Project.Repositories
             return await query.ToListAsync();
         }
 
+        // Returns IQueryable for advanced filtering/sorting/pagination
+        public IQueryable<T> Query()
+        {
+            return dbSet.AsQueryable();
+        }
+
         public async Task<T?> GetByIdAsync(int id)
         {
             return await dbSet.FindAsync(id);

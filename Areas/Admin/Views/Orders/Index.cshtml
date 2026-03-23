@@ -1,7 +1,8 @@
-@model IEnumerable<Project.Models.OrderAdminVM>
+@model Project.Models.PaginatedResult<Project.Models.OrderAdminVM>
 
 @{
     ViewData["Title"] = "Manage Orders";
+    var filters = (Project.Models.OrderFilterOptions?)ViewData["CurrentFilters"] ?? new Project.Models.OrderFilterOptions();
 }
 
 <div class="card shadow-sm">
@@ -9,59 +10,217 @@
         <h4 class="mb-0"><i class="bi bi-receipt"></i> Orders Management</h4>
     </div>
     <div class="card-body">
-        <table class="table table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Order Date</th>
-                    <th>Total Amount</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var order in Model)
-                {
+        <!-- Filter Bar -->
+        <form asp-action="Index" method="get" class="mb-3">
+            <div class="row g-2 mb-3">
+                <div class="col-md-3">
+                    <input type="text" name="SearchTerm" class="form-control form-control-sm" placeholder="Search by order #..." value="@filters.SearchTerm" />
+                </div>
+                <div class="col-md-2">
+                    <select name="OrderStatus" class="form-select form-select-sm">
+                        <option value="">All Status</option>
+                        <option value="0" selected="@(filters.OrderStatus == 0)">Pending</option>
+                        <option value="1" selected="@(filters.OrderStatus == 1)">Processing</option>
+                        <option value="2" selected="@(filters.OrderStatus == 2)">Shipped</option>
+                        <option value="3" selected="@(filters.OrderStatus == 3)">Delivered</option>
+                        <option value="4" selected="@(filters.OrderStatus == 4)">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="DateFrom" class="form-control form-control-sm" value="@filters.DateFrom?.ToString("yyyy-MM-dd")" placeholder="From Date" />
+                </div>
+                <div class="col-md-2">
+                    <input type="date" name="DateTo" class="form-control form-control-sm" value="@filters.DateTo?.ToString("yyyy-MM-dd")" placeholder="To Date" />
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                </div>
+            </div>
+
+            <div class="row g-2 align-items-center">
+                <div class="col-md-6">
+                    @if (filters.HasActiveFilters || filters.OrderStatus.HasValue || filters.DateFrom.HasValue || filters.DateTo.HasValue)
+                    {
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-x"></i> Clear All Filters
+                        </a>
+                        <span class="text-muted ms-2">Filters active</span>
+                    }
+                </div>
+                <div class="col-md-3">
+                    <select name="SortBy" class="form-select form-select-sm">
+                        <option value="">Sort By</option>
+                        <option value="OrderDate" selected="@(filters.SortBy == "OrderDate")">Order Date</option>
+                        <option value="OrderNumber" selected="@(filters.SortBy == "OrderNumber")">Order Number</option>
+                        <option value="TotalAmount" selected="@(filters.SortBy == "TotalAmount")">Total Amount</option>
+                        <option value="Status" selected="@(filters.SortBy == "Status")">Status</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="PageSize" class="form-select form-select-sm">
+                        <option value="10" selected="@(filters.PageSize == 10)">10 per page</option>
+                        <option value="25" selected="@(filters.PageSize == 25)">25 per page</option>
+                        <option value="50" selected="@(filters.PageSize == 50)">50 per page</option>
+                        <option value="100" selected="@(filters.PageSize == 100)">100 per page</option>
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <!-- Results Info -->
+        <div class="mb-3 text-muted small">
+            <i class="bi bi-info-circle"></i>
+            Showing @Model.FirstItemNumber to @Model.LastItemNumber of <strong>@Model.TotalItems</strong> orders
+        </div>
+
+        <!-- Table -->
+        @if (Model.Items.Any())
+        {
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
                     <tr>
-                        <td><strong>@order.OrderNumber</strong></td>
-                        <td>@order.UserEmail</td>
-                        <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
-                        <td><strong>$@order.TotalAmount.ToString("N2")</strong></td>
-                        <td>
-                            @switch (order.StatusValue)
-                            {
-                                case 0:
-                                    <span class="badge bg-warning text-dark">@order.Status</span>
-                                    break;
-                                case 1:
-                                    <span class="badge bg-info">@order.Status</span>
-                                    break;
-                                case 2:
-                                    <span class="badge bg-primary">@order.Status</span>
-                                    break;
-                                case 3:
-                                    <span class="badge bg-success">@order.Status</span>
-                                    break;
-                                case 4:
-                                    <span class="badge bg-danger">@order.Status</span>
-                                    break;
-                                default:
-                                    <span class="badge bg-secondary">@order.Status</span>
-                                    break;
-                            }
-                        </td>
-                        <td class="text-end">
-                            <a asp-action="Details" asp-route-id="@order.OrderId" class="btn btn-sm btn-info">
-                                <i class="bi bi-eye"></i> View
-                            </a>
-                            <a asp-action="UpdateStatus" asp-route-id="@order.OrderId" class="btn btn-sm btn-warning">
-                                <i class="bi bi-arrow-repeat"></i> Status
-                            </a>
-                        </td>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Order Date</th>
+                        <th>Total Amount</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.Items)
+                    {
+                        <tr>
+                            <td><strong>@order.OrderNumber</strong></td>
+                            <td>@order.UserEmail</td>
+                            <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+                            <td><strong>$@order.TotalAmount.ToString("N2")</strong></td>
+                            <td>
+                                @switch (order.StatusValue)
+                                {
+                                    case 0:
+                                        <span class="badge bg-warning text-dark">@order.Status</span>
+                                        break;
+                                    case 1:
+                                        <span class="badge bg-info">@order.Status</span>
+                                        break;
+                                    case 2:
+                                        <span class="badge bg-primary">@order.Status</span>
+                                        break;
+                                    case 3:
+                                        <span class="badge bg-success">@order.Status</span>
+                                        break;
+                                    case 4:
+                                        <span class="badge bg-danger">@order.Status</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@order.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@order.OrderId" class="btn btn-sm btn-info">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                                <a asp-action="UpdateStatus" asp-route-id="@order.OrderId" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-arrow-repeat"></i> Status
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Order pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        @if (Model.HasPreviousPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index" asp-all-route-data="@new Dictionary<string, string>() {
+                                    { "SearchTerm", filters.SearchTerm ?? "" },
+                                    { "OrderStatus", filters.OrderStatus?.ToString() ?? "" },
+                                    { "DateFrom", filters.DateFrom?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "DateTo", filters.DateTo?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "SortBy", filters.SortBy ?? "OrderDate" },
+                                    { "PageNumber", "1" },
+                                    { "PageSize", filters.PageSize.ToString() }
+                                }">
+                                    <i class="bi bi-chevron-double-left"></i> First
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index" asp-all-route-data="@new Dictionary<string, string>() {
+                                    { "SearchTerm", filters.SearchTerm ?? "" },
+                                    { "OrderStatus", filters.OrderStatus?.ToString() ?? "" },
+                                    { "DateFrom", filters.DateFrom?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "DateTo", filters.DateTo?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "SortBy", filters.SortBy ?? "OrderDate" },
+                                    { "PageNumber", (Model.CurrentPage - 1).ToString() },
+                                    { "PageSize", filters.PageSize.ToString() }
+                                }">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        }
+
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-action="Index" asp-all-route-data="@new Dictionary<string, string>() {
+                                    { "SearchTerm", filters.SearchTerm ?? "" },
+                                    { "OrderStatus", filters.OrderStatus?.ToString() ?? "" },
+                                    { "DateFrom", filters.DateFrom?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "DateTo", filters.DateTo?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "SortBy", filters.SortBy ?? "OrderDate" },
+                                    { "PageNumber", i.ToString() },
+                                    { "PageSize", filters.PageSize.ToString() }
+                                }">@i</a>
+                            </li>
+                        }
+
+                        @if (Model.HasNextPage)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index" asp-all-route-data="@new Dictionary<string, string>() {
+                                    { "SearchTerm", filters.SearchTerm ?? "" },
+                                    { "OrderStatus", filters.OrderStatus?.ToString() ?? "" },
+                                    { "DateFrom", filters.DateFrom?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "DateTo", filters.DateTo?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "SortBy", filters.SortBy ?? "OrderDate" },
+                                    { "PageNumber", (Model.CurrentPage + 1).ToString() },
+                                    { "PageSize", filters.PageSize.ToString() }
+                                }">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" asp-action="Index" asp-all-route-data="@new Dictionary<string, string>() {
+                                    { "SearchTerm", filters.SearchTerm ?? "" },
+                                    { "OrderStatus", filters.OrderStatus?.ToString() ?? "" },
+                                    { "DateFrom", filters.DateFrom?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "DateTo", filters.DateTo?.ToString("yyyy-MM-dd") ?? "" },
+                                    { "SortBy", filters.SortBy ?? "OrderDate" },
+                                    { "PageNumber", Model.TotalPages.ToString() },
+                                    { "PageSize", filters.PageSize.ToString() }
+                                }">
+                                    Last <i class="bi bi-chevron-double-right"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> No orders found matching your criteria.
+            </div>
+        }
     </div>
 </div>

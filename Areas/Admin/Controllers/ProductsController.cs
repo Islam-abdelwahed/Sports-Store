@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Project.Models;
 using Project.Repositories;
 
@@ -14,10 +15,64 @@ namespace Project.Areas.Admin.Controllers
         private readonly IRepository<OrderItem> orderItemRepo = orderItemRepo;
 
         // GET: Admin/Products
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(ProductFilterOptions? filters)
         {
-            var products = await productRepo.GetAllAsync(p => p.Category);
-            var viewModels = products.Select(p => new ProductVM
+            filters ??= new ProductFilterOptions();
+
+            // Validate page size
+            if (filters.PageSize < 10 || filters.PageSize > 100)
+                filters.PageSize = 25;
+            if (filters.PageNumber < 1)
+                filters.PageNumber = 1;
+
+            var query = productRepo.Query().Include(p => p.Category);
+
+            // Apply search filter
+            if (!string.IsNullOrEmpty(filters.SearchTerm))
+            {
+                var searchTerm = filters.SearchTerm.ToLower();
+                query = query.Where(p =>
+                    p.Name.ToLower().Contains(searchTerm) ||
+                    p.SKU.ToLower().Contains(searchTerm));
+            }
+
+            // Apply category filter
+            if (filters.CategoryId.HasValue)
+            {
+                query = query.Where(p => p.CategoryId == filters.CategoryId);
+            }
+
+            // Apply active status filter
+            if (filters.IsActive.HasValue)
+            {
+                query = query.Where(p => p.IsActive == filters.IsActive);
+            }
+
+            // Apply stock status filter
+            if (filters.InStockOnly.HasValue && filters.InStockOnly.Value)
+            {
+                query = query.Where(p => p.StockQuantity > 0);
+            }
+
+            // Apply sorting
+            query = filters.SortBy?.ToLower() switch
+            {
+                "name" => filters.SortOrder == "desc"
+                    ? query.OrderByDescending(p => p.Name)
+                    : query.OrderBy(p => p.Name),
+                "price" => filters.SortOrder == "desc"
+                    ? query.OrderByDescending(p => p.Price)
+                    : query.OrderBy(p => p.Price),
+                "stock" => filters.SortOrder == "desc"
+                    ? query.OrderByDescending(p => p.StockQuantity)
+                    : query.OrderBy(p => p.StockQuantity),
+                _ => query.OrderBy(p => p.ProductId)
+            };
+
+            // Apply pagination
+            var pagedResult = await query.PaginateAsync(filters.PageNumber, filters.PageSize);
+
+            var viewModels = pagedResult.Items.Select(p => new ProductVM
             {
                 ProductId = p.ProductId,
                 Name = p.Name,
@@ -29,7 +84,21 @@ namespace Project.Areas.Admin.Controllers
                 CategoryName = p.Category?.Name ?? "N/A"
             }).ToList();
 
-            return View(viewModels);
+            // Create view model with pagination
+            var result = new PaginatedResult<ProductVM>(
+                viewModels,
+                pagedResult.CurrentPage,
+                pagedResult.PageSize,
+                pagedResult.TotalItems)
+            {
+                Items = viewModels
+            };
+
+            // Pass filters and categories to view
+            ViewData["CurrentFilters"] = filters;
+            ViewData["Categories"] = await GetCategoriesAsync();
+
+            return View(result);
         }
 
         // GET: Admin/Products/Create

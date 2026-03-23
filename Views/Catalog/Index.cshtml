@@ -22,6 +22,38 @@
         </div>
     </div>
 
+    <!-- Search Bar -->
+    <form asp-action="Index" method="get" class="mb-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-8">
+                        <input type="text" name="searchTerm" class="form-control" placeholder="Search products by name or SKU..." value="@Model.SearchTerm" />
+                        <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                        {
+                            <a asp-action="Index" asp-route-categoryId="@Model.CategoryId" class="btn btn-secondary btn-sm mt-2 w-100">
+                                <i class="bi bi-x"></i> Clear Search
+                            </a>
+                        }
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                {
+                    <small class="text-muted mt-2 d-block">
+                        <i class="bi bi-info-circle"></i>
+                        Showing @Model.Products.Count result(s) for "<strong>@Model.SearchTerm</strong>"
+                    </small>
+                }
+            </div>
+        </div>
+    </form>
+
     @if (Model.Products.Any())
     {
         <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
@@ -77,7 +109,7 @@
                     @for (int i = 1; i <= Model.TotalPages; i++)
                     {
                         <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                            <a class="page-link" asp-action="Index" asp-route-categoryId="@Model.CategoryId" asp-route-page="@i">@i</a>
+                            <a class="page-link" asp-action="Index" asp-route-categoryId="@Model.CategoryId" asp-route-searchTerm="@Model.SearchTerm" asp-route-page="@i">@i</a>
                         </li>
                     }
                 </ul>
