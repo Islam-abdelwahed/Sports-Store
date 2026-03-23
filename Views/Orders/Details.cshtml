@@ -12,6 +12,21 @@
         </ol>
     </nav>
 
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-primary text-white">
             <h4 class="mb-0"><i class="bi bi-receipt"></i> Order Details</h4>
@@ -91,6 +106,44 @@
                 <a asp-controller="Catalog" asp-action="Index" class="btn btn-outline-primary">
                     <i class="bi bi-shop"></i> Continue Shopping
                 </a>
+                @if (Model.IsCancellable)
+                {
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal">
+                        <i class="bi bi-x-circle"></i> Cancel Order
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Confirmation Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="cancelOrderModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Cancel Order
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Are you sure you want to cancel this order?</strong></p>
+                <p class="mb-0">Order Number: <strong>@Model.OrderNumber</strong></p>
+                <p>Total Amount: <strong class="text-success">$@Model.TotalAmount.ToString("N2")</strong></p>
+                <hr />
+                <p class="text-muted mb-0"><small>This action cannot be undone. Your product stock will be restored.</small></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i> No, Keep Order
+                </button>
+                <form asp-action="Cancel" asp-route-id="@Model.OrderId" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-check"></i> Yes, Cancel Order
+                    </button>
+                </form>
             </div>
         </div>
     </div>

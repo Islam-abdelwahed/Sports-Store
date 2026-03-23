@@ -15,12 +15,13 @@ namespace Project.Areas.Admin.Controllers
         // GET: Admin/Categories
         public async Task<IActionResult> Index()
         {
-            var categories = await categoryRepo.GetAllAsync();
+            var categories = await categoryRepo.GetAllAsync(c => c.ParentCategory);
             var viewModels = categories.Select(c => new CategoryVM
             {
                 CategoryId = c.CategoryId,
                 Name = c.Name,
-                ParentCategoryId = c.ParentCategoryId
+                ParentCategoryId = c.ParentCategoryId,
+                ParentCategoryName = c.ParentCategory?.Name
             }).ToList();
 
             return View(viewModels);
